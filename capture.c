@@ -1,7 +1,7 @@
 #include "capture.h"
 
 u_int8_t *buffer;
-int camera;
+int camera, size, init;
 
 u_int8_t* convert_yuyv_to_rgb(u_int8_t* yuyv_image) {
     u_int8_t* rgb_image = (u_int8_t*) malloc(sizeof(unsigned char)*320*240*3);
@@ -135,8 +135,7 @@ int stop_streaming(int fd) {
     }
 }
 
-
-u_int8_t* get_rgbframe() {
+void init_camera() {
     camera = open("/dev/video0", O_RDWR);
     if(camera == -1) {
         perror("Could not open device");
@@ -144,8 +143,15 @@ u_int8_t* get_rgbframe() {
     }
     set_format(camera);
     request_buffer(camera, 1);
-    int size = query_buffer(camera);
+    size = query_buffer(camera);
     start_streaming(camera);
+}
+
+u_int8_t* get_rgbframe() {
+    if(!init) {
+        init_camera();
+        init = 69;
+    }
     queue_buffer(camera);
     fd_set fds;
     FD_ZERO(&fds);
@@ -158,14 +164,5 @@ u_int8_t* get_rgbframe() {
         exit(1);
     }
     dequeue_buffer(camera);
-    char *name = (char*)malloc(sizeof(char)*11);
-    sprintf(name, "pic%d.img", 1);
-    int file = open(name, O_WRONLY|O_CREAT, 0777);
-    printf("%d\n", buffer);
-    if( -1 == write(file, buffer, size)) {
-        perror("write failed");
-        exit(1);
-    }
-    close(file);
     return convert_yuyv_to_rgb(buffer);
 }

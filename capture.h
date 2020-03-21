@@ -24,5 +24,6 @@ int start_streaming(int);
 int dequeue_buffer(int);
 int stop_streaming(int);
 u_int8_t* get_rgbframe();
+void init_camera();
 
 #endif

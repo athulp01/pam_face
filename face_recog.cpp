@@ -15,12 +15,10 @@ matrix<float, 0, 1> get_embedding(matrix<rgb_pixel> img, anet_type &net, shape_p
         faces.push_back(move(face_chip));
     }
     if (faces.size() == 0){
-        cerr << "No faces found in image!" << endl;
-        exit(PAM_AUTH_ERR);
+        throw "No face where found in the image";
     }
     if(faces.size() > 1) {
-        cerr<<"More than one face found in the image"<<endl;
-        exit(PAM_AUTH_ERR);
+        throw "Multiple face where found in the image";
     }
     std::vector<matrix<float,0,1>> tmp = net(faces);
     return tmp[0];
@@ -44,7 +42,17 @@ matrix<rgb_pixel> capture_from_cam() {
         pix.blue = rgb[i+2];
         mat((i/3)/320 , (i/3)%320) = pix;
     }
-    image_window img(mat);
-    dlib::sleep(5000);
+    free(rgb);
     return mat;
+}
+
+int main() {
+    	frontal_face_detector detector = get_frontal_face_detector();
+		shape_predictor sp;
+		deserialize("/home/athul/.config/i3-facelock/model/shape_predictor_5_face_landmarks.dat") >> sp;
+		anet_type net;
+		deserialize("/home/athul/.config/i3-facelock//model/dlib_face_recognition_resnet_model_v1.dat") >> net;
+		matrix<rgb_pixel> img = capture_from_cam();
+		int result = predict(get_embedding(img, net, sp, detector), 0.5);
+        return result;
 }

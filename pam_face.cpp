@@ -18,15 +18,20 @@ PAM_EXTERN int pam_sm_authenticate( pam_handle_t *pamh, int flags,int argc, cons
 
 	const char* pUsername;
 	retval = pam_get_user(pamh, &pUsername, "Username: ");
-
-	printf("Welcome %s\n", pUsername);
-	frontal_face_detector detector = get_frontal_face_detector();
-    shape_predictor sp;
-    deserialize("/home/athul/.config/i3-facelock/model/shape_predictor_5_face_landmarks.dat") >> sp;
-    anet_type net;
-    deserialize("/home/athul/.config/i3-facelock//model/dlib_face_recognition_resnet_model_v1.dat") >> net;
-	matrix<rgb_pixel> img = capture_from_cam();
-    bool result = predict(get_embedding(img, net, sp, detector), 0.5);
+	bool result = false;
+	try {
+		printf("Welcome %s\n", pUsername);
+		frontal_face_detector detector = get_frontal_face_detector();
+		shape_predictor sp;
+		deserialize("/home/athul/.config/i3-facelock/model/shape_predictor_5_face_landmarks.dat") >> sp;
+		anet_type net;
+		deserialize("/home/athul/.config/i3-facelock//model/dlib_face_recognition_resnet_model_v1.dat") >> net;
+		matrix<rgb_pixel> img = capture_from_cam();
+		result = predict(get_embedding(img, net, sp, detector), 0.5);
+	} catch (const char *err) {
+		cerr<<err<<endl;
+		return PAM_AUTH_ERR;
+	}
 	if (retval != PAM_SUCCESS) {
 		return retval;
 	}
